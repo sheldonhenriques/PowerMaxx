@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energy Price Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        /* Charts Container Styles */
+        .charts-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .charts-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .charts-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .refresh-button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .refresh-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .refresh-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .tabs-container {
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .tabs {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 15px 20px;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            color: #666;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+            min-height: 400px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+
+        .chart-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 400px;
+            color: #666;
+        }
+
+        /* Sites Container Styles */
+        .sites-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .sites-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sites-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .sites-content {
+            padding: 20px;
+        }
+
+        .sites-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .site-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .site-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .site-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .site-power {
+            font-size: 1.1rem;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .site-id {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .power-unit {
+            font-size: 0.8rem;
+            color: #999;
+            margin-left: 5px;
+        }
+
+        .sites-loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .sites-error {
+            text-align: center;
+            padding: 20px;
+            color: #dc3545;
+            background: #f8d7da;
+            border-radius: 8px;
+            margin: 20px;
+        }
+
+        /* Machines Container Styles */
+        .machines-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .machines-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .machines-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .machines-content {
+            padding: 20px;
+        }
+
+        .machines-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .machine-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            border-left: 4px solid #28a745;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .machine-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .machine-id {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .machine-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        .revenue-section {
+            border-top: 1px solid #e0e0e0;
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+
+        .revenue-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .revenue-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .revenue-item {
+            background: white;
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .revenue-label {
+            font-size: 0.7rem;
+            color: #666;
+            margin-bottom: 3px;
+        }
+
+        .revenue-value {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        .machines-loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .machines-error {
+            text-align: center;
+            padding: 20px;
+            color: #dc3545;
+            background: #f8d7da;
+            border-radius: 8px;
+            margin: 20px;
+        }
+
+        .machine-footer {
+            text-align: center;
+            padding-top: 15px;
+            margin-top: 15px;
+            border-top: 1px solid #e0e0e0;
+            color: #666;
+            font-size: 0.8rem;
+        }
+
+        /* Price Table Styles */
+        .price-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .price-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .price-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .last-updated {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        .price-table-container {
+            overflow-x: auto;
+            max-height: 400px;
+        }
+
+        .price-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        .price-table th {
+            background: #f8f9fa;
+            color: #333;
+            font-weight: 600;
+            padding: 15px 12px;
+            text-align: left;
+            border-bottom: 2px solid #e0e0e0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .price-table td {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+        }
+
+        .price-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .price-value {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .timestamp {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .error-message {
+            text-align: center;
+            padding: 20px;
+            color: #dc3545;
+            background: #f8d7da;
+            border-radius: 8px;
+            margin: 20px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .charts-header,
+            .price-header,
+            .sites-header {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+
+            .price-table th,
+            .price-table td {
+                padding: 8px 6px;
+                font-size: 0.9rem;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .tab {
+                border-bottom: 1px solid #e0e0e0;
+                border-right: none;
+            }
+
+            .chart-wrapper {
+                height: 300px;
+            }
+
+            .sites-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="header">
+            <h1>⚡ Energy Price Dashboard</h1>
+            <p>Real-time monitoring of hash, token, and energy prices</p>
+        </div>
+
+        <div class="sites-container">
+            <div class="sites-header">
+                <div class="sites-title">🏭 Mining Sites</div>
+                <button class="refresh-button" id="refreshSitesButton" onclick="fetchSites()">
+                    🔄 Refresh Sites
+                </button>
+            </div>
+            
+            <div class="sites-content" id="sitesContent">
+                <div class="sites-loading">Loading sites...</div>
+            </div>
+        </div>
+
+        <div class="machines-container">
+            <div class="machines-header">
+                <div class="machines-title">💻 Machines & Revenue</div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="refresh-button" id="autoOptimizeButton" onclick="toggleAutoOptimize()">
+                        🔄 Auto-Optimize: OFF
+                    </button>
+                    <button class="refresh-button" id="optimizeAllocationButton" onclick="optimizeAndUpdateMachines()">
+                        🎯 Optimize & Update
+                    </button>
+                    <button class="refresh-button" id="refreshMachinesButton" onclick="fetchMachines()">
+                        🔄 Refresh Machines
+                    </button>
+                </div>
+            </div>
+            
+            <div class="machines-content" id="machinesContent">
+                <div class="machines-loading">Loading machines...</div>
+            </div>
+        </div>
+
+        <div class="charts-container">
+            <div class="charts-header">
+                <div class="charts-title">📈 Price Trends & Analytics</div>
+                <button class="refresh-button" id="refreshButton" onclick="fetchPrices()">
+                    🔄 Refresh Data
+                </button>
+            </div>
+            
+            <div class="tabs-container">
+                <ul class="tabs" id="chartTabs">
+                    <li class="tab active" data-tab="hash-price">Hash Price</li>
+                    <li class="tab" data-tab="token-price">Token Price</li>
+                    <li class="tab" data-tab="energy-price">Energy Price</li>
+                </ul>
+            </div>
+            
+            <div class="tab-content active" id="hash-price">
+                <div class="chart-wrapper">
+                    <canvas id="hashPriceChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="token-price">
+                <div class="chart-wrapper">
+                    <canvas id="tokenPriceChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="energy-price">
+                <div class="chart-wrapper">
+                    <canvas id="energyPriceChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="price-container">
+            <div class="price-header">
+                <div>
+                    <div class="price-title">📊 Latest Price Data</div>
+                    <div class="last-updated" id="lastUpdated">Last updated: Never</div>
+                </div>
+            </div>
+            
+            <div class="price-table-container" id="priceTableContainer">
+                <div class="loading" id="priceLoading">Loading prices...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const priceTableContainer = document.getElementById('priceTableContainer');
+        const lastUpdated = document.getElementById('lastUpdated');
+        const refreshButton = document.getElementById('refreshButton');
+        const chartTabs = document.getElementById('chartTabs');
+        const sitesContent = document.getElementById('sitesContent');
+        const refreshSitesButton = document.getElementById('refreshSitesButton');
+        const machinesContent = document.getElementById('machinesContent');
+        const refreshMachinesButton = document.getElementById('refreshMachinesButton');
+        const optimizeAllocationButton = document.getElementById('optimizeAllocationButton');
+        const autoOptimizeButton = document.getElementById('autoOptimizeButton');
+
+        // Auto-optimization variables
+        let autoOptimizeInterval = null;
+        let isAutoOptimizing = false;
+        let lastOptimizationTime = null;
+
+        // Function to toggle auto-optimization
+        function toggleAutoOptimize() {
+            if (isAutoOptimizing) {
+                // Stop auto-optimization
+                if (autoOptimizeInterval) {
+                    clearInterval(autoOptimizeInterval);
+                    autoOptimizeInterval = null;
+                }
+                isAutoOptimizing = false;
+                autoOptimizeButton.textContent = '🔄 Auto-Optimize: OFF';
+                autoOptimizeButton.style.background = 'rgba(255, 255, 255, 0.2)';
+                console.log('Auto-optimization stopped');
+            } else {
+                // Start auto-optimization
+                isAutoOptimizing = true;
+                autoOptimizeButton.textContent = '🔄 Auto-Optimize: ON';
+                autoOptimizeButton.style.background = 'rgba(76, 175, 80, 0.3)';
+                
+                // Run immediately
+                autoOptimizeAndUpdate();
+                
+                // Then set up interval
+                autoOptimizeInterval = setInterval(autoOptimizeAndUpdate, 150000); // 2.5 minutes
+                console.log('Auto-optimization started - will run every 2.5 minutes');
+            }
+        }
+
+        // Function for auto-optimization (without user feedback)
+        async function autoOptimizeAndUpdate() {
+            try {
+                lastOptimizationTime = new Date();
+                console.log('Auto-optimizing machines...', lastOptimizationTime.toLocaleTimeString());
+                
+                const response = await fetch('/api/update-machines-with-allocation');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    console.log('Auto-optimization successful:', data.timestamp);
+                    // Refresh machines display silently
+                    fetchMachines();
+                } else {
+                    console.error('Auto-optimization failed:', data.error);
+                }
+            } catch (error) {
+                console.error('Auto-optimization error:', error);
+            }
+        }
+
+        // Function to optimize allocation and update machines (manual)
+        async function optimizeAndUpdateMachines() {
+            try {
+                optimizeAllocationButton.disabled = true;
+                optimizeAllocationButton.textContent = '🔄 Optimizing...';
+                
+                const response = await fetch('/api/update-machines-with-allocation');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    alert('Machines optimized and updated successfully!');
+                    console.log('Optimization result:', data);
+                    // Refresh the machines display to show the updated data
+                    fetchMachines();
+                } else {
+                    alert('Failed to optimize and update machines: ' + (data.error || 'Unknown error'));
+                    console.error('Optimization failed:', data);
+                }
+            } catch (error) {
+                alert('Network error occurred while optimizing machines');
+                console.error('Error optimizing machines:', error);
+            } finally {
+                optimizeAllocationButton.disabled = false;
+                optimizeAllocationButton.textContent = '🎯 Optimize & Update';
+            }
+        }
+
+        // Chart instances
+        let hashPriceChart = null;
+        let tokenPriceChart = null;
+        let energyPriceChart = null;
+
+        // Chart functionality
+        function createChart(canvasId, label, data, color) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            
+            return new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: label,
+                        data: data.values,
+                        borderColor: color,
+                        backgroundColor: color + '20',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: color,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                },
+                                color: '#333'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: color,
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            displayColors: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Time',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                color: '#f0f0f0'
+                            }
+                        },
+                        y: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Price ($)',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                color: '#f0f0f0'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toFixed(4);
+                                }
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+
+        function updateCharts(prices) {
+            if (!prices || prices.length === 0) return;
+
+            // Sort prices by timestamp (oldest first)
+            const sortedPrices = prices.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            
+            // Prepare data for charts
+            const labels = sortedPrices.map(price => {
+                const date = new Date(price.timestamp);
+                return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            });
+            
+            const hashPriceData = sortedPrices.map(price => price.hash_price);
+            const tokenPriceData = sortedPrices.map(price => price.token_price);
+            const energyPriceData = sortedPrices.map(price => price.energy_price);
+
+            // Destroy existing charts if they exist
+            if (hashPriceChart) hashPriceChart.destroy();
+            if (tokenPriceChart) tokenPriceChart.destroy();
+            if (energyPriceChart) energyPriceChart.destroy();
+
+            // Create new charts
+            hashPriceChart = createChart('hashPriceChart', 'Hash Price', {
+                labels: labels,
+                values: hashPriceData
+            }, '#667eea');
+
+            tokenPriceChart = createChart('tokenPriceChart', 'Token Price', {
+                labels: labels,
+                values: tokenPriceData
+            }, '#764ba2');
+
+            energyPriceChart = createChart('energyPriceChart', 'Energy Price', {
+                labels: labels,
+                values: energyPriceData
+            }, '#f093fb');
+        }
+
+        // Tab functionality
+        function switchTab(tabId) {
+            // Remove active class from all tabs and contents
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Add active class to selected tab and content
+            document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // Sites functionality
+        function createSitesDisplay(site) {
+            if (!site) {
+                return '<div class="sites-error">No site data available</div>';
+            }
+
+            return `
+                <div class="sites-grid">
+                    <div class="site-card">
+                        <div class="site-name">${site.name}</div>
+                        <div class="site-power">
+                            ${formatPower(site.power)}
+                            <span class="power-unit">(${site.power.toLocaleString()} W)</span>
+                        </div>
+                        <div class="site-id">Site ID: ${site.id}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function fetchSites() {
+            try {
+                refreshSitesButton.disabled = true;
+                sitesContent.innerHTML = '<div class="sites-loading">Loading sites...</div>';
+                
+                const response = await fetch('/api/sites');
+                const data = await response.json();
+                console.log(data)
+                
+                if (data.status === 'success') {
+                    sitesContent.innerHTML = createSitesDisplay(data.site);
+                } else {
+                    sitesContent.innerHTML = `<div class="sites-error">${data.message || 'Failed to load sites'}</div>`;
+                }
+            } catch (error) {
+                sitesContent.innerHTML = '<div class="sites-error">Failed to connect to sites service</div>';
+                console.error('Error fetching sites:', error);
+            } finally {
+                refreshSitesButton.disabled = false;
+            }
+        }
+
+        // Machines functionality
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount);
+        }
+
+        function formatPower(power) {
+            if (power >= 1000000) {
+                return (power / 1000000).toFixed(1) + ' MW';
+            } else if (power >= 1000) {
+                return (power / 1000).toFixed(1) + ' kW';
+            } else {
+                return power + ' W';
+            }
+        }
+
+        function createMachinesDisplay(machines) {
+            if (!machines) {
+                return '<div class="machines-error">No machines data available</div>';
+            }
+
+            const netProfit = machines.total_revenue - machines.total_power_cost;
+            const profitMargin = machines.total_revenue > 0 ? (netProfit / machines.total_revenue * 100) : 0;
+            const isProfitable = netProfit >= 0;
+
+            // Helper function to format hashrate
+            function formatHashrate(hashrate) {
+                if (hashrate >= 1000000000) {
+                    return (hashrate / 1000000000).toFixed(1) + ' GH/s';
+                } else if (hashrate >= 1000000) {
+                    return (hashrate / 1000000).toFixed(1) + ' MH/s';
+                } else if (hashrate >= 1000) {
+                    return (hashrate / 1000).toFixed(1) + ' KH/s';
+                } else {
+                    return hashrate + ' H/s';
+                }
+            }
+
+            return `
+                <div class="machines-grid">
+                    <div class="machine-card">
+                        <div class="machine-id">Machine #${machines.id}</div>
+                        
+                        <!-- Key Metrics Row -->
+                        <div class="machine-stats">
+                            <div class="stat-item">
+                                <div class="stat-label">Total Power</div>
+                                <div class="stat-value">${formatPower(machines.total_power_used)}</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Active Miners</div>
+                                <div class="stat-value">${machines.air_miners + machines.hydro_miners + machines.immersion_miners + machines.gpu_compute + machines.asic_compute}</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Profitability Section -->
+                        <div class="revenue-section">
+                            <div class="revenue-title">💰 Profitability</div>
+                            <div class="revenue-grid">
+                                <div class="revenue-item">
+                                    <div class="revenue-label">Revenue</div>
+                                    <div class="revenue-value">${formatCurrency(machines.total_revenue)}</div>
+                                </div>
+                                <div class="revenue-item">
+                                    <div class="revenue-label">Costs</div>
+                                    <div class="revenue-value">${formatCurrency(machines.total_power_cost)}</div>
+                                </div>
+                            </div>
+                            <div class="revenue-grid" style="margin-top: 10px;">
+                                <div class="revenue-item">
+                                    <div class="revenue-label">Net Profit</div>
+                                    <div class="revenue-value" style="color: ${isProfitable ? '#28a745' : '#dc3545'}; font-size: 1.1rem;">
+                                        ${formatCurrency(netProfit)}
+                                    </div>
+                                </div>
+                                <div class="revenue-item">
+                                    <div class="revenue-label">Margin</div>
+                                    <div class="revenue-value" style="color: ${isProfitable ? '#28a745' : '#dc3545'}">
+                                        ${profitMargin.toFixed(1)}%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Equipment Summary -->
+                        <div class="revenue-section">
+                            <div class="revenue-title">⚡ Equipment Summary</div>
+                            <div class="revenue-grid">
+                                <div class="revenue-item">
+                                    <div class="revenue-label">ASIC Miners</div>
+                                    <div class="revenue-value">${machines.asic_compute}</div>
+                                </div>
+                                <div class="revenue-item">
+                                    <div class="revenue-label">GPU Miners</div>
+                                    <div class="revenue-value">${machines.gpu_compute}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Detailed Miners Section -->
+                        <div class="revenue-section">
+                            <div class="revenue-title">🔧 Detailed Miners</div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                                <div style="background: white; padding: 12px; border-radius: 8px; border-left: 3px solid #17a2b8;">
+                                    <div style="font-weight: bold; color: #17a2b8;">🌬️ Air Miners</div>
+                                    <div style="font-size: 1.2rem; font-weight: bold; color: #17a2b8; margin-top: 5px;">${machines.air_miners || 0}</div>
+                                </div>
+                                
+                                <div style="background: white; padding: 12px; border-radius: 8px; border-left: 3px solid #28a745;">
+                                    <div style="font-weight: bold; color: #28a745;">💧 Hydro Miners</div>
+                                    <div style="font-size: 1.2rem; font-weight: bold; color: #28a745; margin-top: 5px;">${machines.hydro_miners || 0}</div>
+                                </div>
+                                
+                                <div style="background: white; padding: 12px; border-radius: 8px; border-left: 3px solid #6f42c1;">
+                                    <div style="font-weight: bold; color: #6f42c1;">🌊 Immersion Miners</div>
+                                    <div style="font-size: 1.2rem; font-weight: bold; color: #6f42c1; margin-top: 5px;">${machines.immersion_miners || 0}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="machine-footer">
+                            <small>Last updated: ${new Date(machines.updated_at).toLocaleDateString()}</small>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function fetchMachines() {
+            try {
+                refreshMachinesButton.disabled = true;
+                machinesContent.innerHTML = '<div class="machines-loading">Loading machines...</div>';
+                
+                const response = await fetch('/api/machines');
+                const data = await response.json();
+                console.log('Machines data:', data);
+                
+                if (data.status === 'success') {
+                    machinesContent.innerHTML = createMachinesDisplay(data.machines);
+                } else {
+                    machinesContent.innerHTML = `<div class="machines-error">${data.message || 'Failed to load machines'}</div>`;
+                }
+            } catch (error) {
+                machinesContent.innerHTML = '<div class="machines-error">Failed to connect to machines service</div>';
+                console.error('Error fetching machines:', error);
+            } finally {
+                refreshMachinesButton.disabled = false;
+            }
+        }
+
+        // Price table functionality
+        function formatPrice(price) {
+            return parseFloat(price).toFixed(4);
+        }
+
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleString();
+        }
+
+        function createPriceTable(prices) {
+            if (!prices || prices.length === 0) {
+                return '<div class="error-message">No price data available</div>';
+            }
+
+            let tableHTML = `
+                <table class="price-table">
+                    <thead>
+                        <tr>
+                            <th>Hash Price</th>
+                            <th>Token Price</th>
+                            <th>Energy Price</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            prices.forEach(price => {
+                tableHTML += `
+                    <tr>
+                        <td class="price-value">$${formatPrice(price.hash_price)}</td>
+                        <td class="price-value">$${formatPrice(price.token_price)}</td>
+                        <td class="price-value">$${formatPrice(price.energy_price)}</td>
+                        <td class="timestamp">${formatTimestamp(price.timestamp)}</td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += '</tbody></table>';
+            return tableHTML;
+        }
+
+        async function fetchPrices() {
+            try {
+                refreshButton.disabled = true;
+                priceTableContainer.innerHTML = '<div class="loading">Loading prices...</div>';
+                
+                const response = await fetch('/api/prices');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    priceTableContainer.innerHTML = createPriceTable(data.prices);
+                    lastUpdated.textContent = `Last updated: ${data.timestamp}`;
+                    
+                    // Update charts with new data
+                    updateCharts(data.prices);
+                } else {
+                    priceTableContainer.innerHTML = `<div class="error-message">${data.message || 'Failed to load prices'}</div>`;
+                }
+            } catch (error) {
+                priceTableContainer.innerHTML = '<div class="error-message">Failed to connect to price service</div>';
+                console.error('Error fetching prices:', error);
+            } finally {
+                refreshButton.disabled = false;
+            }
+        }
+
+        // Tab switching
+        chartTabs.addEventListener('click', (e) => {
+            if (e.target.classList.contains('tab')) {
+                const tabId = e.target.getAttribute('data-tab');
+                switchTab(tabId);
+            }
+        });
+
+        // Initialize
+        fetchPrices();
+        fetchSites();
+        fetchMachines();
+
+        // Auto-refresh prices every 30 seconds
+        setInterval(fetchPrices, 30000);
+    </script>
+</body>
+</html> 
