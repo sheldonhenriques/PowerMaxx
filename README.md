@@ -1,72 +1,116 @@
-# Flask Chat App
+# PowerMaxx
 
-A simple Flask application with a modern chat interface that includes a dummy backend endpoint.
+**PowerMaxx** is a real-time, power-aware compute optimization platform that dynamically allocates compute resources—such as ASIC miners and GPUs—to maximize revenue per watt. By leveraging live market data, blockchain statistics, and predictive AI models, PowerMaxx ensures optimal hardware utilization within defined power constraints.
 
-## Features
+---
 
-- 🎨 Modern, responsive chat interface
-- 💬 Real-time message display
-- ⏰ Timestamp for each message
-- 📱 Mobile-friendly design
-- 🔄 Typing indicators
-- 🎯 Dummy backend endpoint for testing
+## 🚀 Features
 
-## Setup
+- **Real-Time Optimization**: Continuously analyzes market and blockchain data to adjust compute resource allocation.
+- **Predictive Modeling**: Employs LSTM models to forecast Bitcoin hashrate trends.
+- **Dynamic Resource Allocation**: Solves bounded knapsack problems to determine the most profitable mix of hardware under power limits.
+- **No API Keys Required**: Utilizes public RPC endpoints for data retrieval, eliminating the need for API keys.
+- **User-Friendly Interface**: Provides a modern, responsive web interface for monitoring and control.
 
-1. **Install Python dependencies:**
+---
+
+## 🧐 How It Works
+
+1. **Data Ingestion**: Fetches live data on token prices, energy costs, and blockchain metrics using public RPC endpoints.
+2. **Forecasting**: Applies LSTM models to predict near-future hashrate and market conditions.
+3. **Optimization**: Calculates revenue-per-watt for available hardware and solves a bounded knapsack problem to maximize profitability within the power budget.
+4. **Execution**: Outputs optimal hardware allocation strategies and provides actionable insights through the web interface.
+
+---
+
+## 📁 Project Structure
+
+```plaintext
+PowerMaxx/
+├── app.py                      # Main Flask application
+├── templates/
+│   └── index.html              # Web interface template
+├── lstm_7day_model.weights.h5  # Pretrained LSTM model weights
+├── price_scaler.pkl            # Scaler for price normalization
+├── 7day_data.csv               # Historical data for model training
+├── EnergyModel.ipynb           # Jupyter notebook for energy modeling
+├── Hash_Price_Prediction.ipynb # Jupyter notebook for price prediction
+├── requirements.txt            # Python dependencies
+└── README.md                   # Project documentation
+```
+
+---
+
+## ⚙️ Installation
+
+1. **Clone the Repository**:
+
+   ```bash
+   git clone https://github.com/sheldonhenriques/PowerMaxx.git
+   cd PowerMaxx
+   ```
+
+2. **Install Dependencies**:
+
    ```bash
    pip install -r requirements.txt
    ```
 
-2. **Run the application:**
+3. **Run the Application**:
+
    ```bash
    python app.py
    ```
 
-3. **Open your browser and navigate to:**
+4. **Access the Web Interface**:
+
+   Open your browser and navigate to `http://localhost:5000`
+
+---
+
+## 📈 Usage
+
+- **Real-Time Monitoring**: View current hardware allocations and performance metrics through the web interface.
+- **Predictive Insights**: Analyze forecasts for hashrate and market trends to inform decision-making.
+- **Dynamic Allocation**: Adjust hardware configurations on-the-fly to respond to changing market conditions.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! To contribute:
+
+1. **Fork the Repository**
+
+2. **Create a New Branch**:
+
+   ```bash
+   git checkout -b feature/YourFeature
    ```
-   http://localhost:5000
+
+3. **Commit Your Changes**:
+
+   ```bash
+   git commit -m "Add YourFeature"
    ```
 
-## How it works
+4. **Push to Your Fork**:
 
-- The frontend sends POST requests to `/api/chat` with JSON data containing the user's message
-- The backend processes the message and returns a response with:
-  - `response`: The bot's reply
-  - `timestamp`: When the response was generated
-  - `status`: Success/error status
+   ```bash
+   git push origin feature/YourFeature
+   ```
 
-## API Endpoint
+5. **Submit a Pull Request**
 
-**POST** `/api/chat`
+---
 
-**Request Body:**
-```json
-{
-  "message": "Hello, how are you?"
-}
-```
+## 📄 License
 
-**Response:**
-```json
-{
-  "response": "Hello! How can I help you today?",
-  "timestamp": "14:30:25",
-  "status": "success"
-}
-```
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-## Customization
+---
 
-To integrate with a real AI service, modify the `chat()` function in `app.py` to call your preferred AI API instead of the dummy responses.
+## 📨 Contact
 
-## Project Structure
+For questions or support, please contact [sheldonhenriques](https://github.com/sheldonhenriques).
 
-```
-Mara/
-├── app.py              # Main Flask application
-├── requirements.txt    # Python dependencies
-├── README.md          # This file
-└── templates/
-    └── index.html     # Chat interface template
-``` 
